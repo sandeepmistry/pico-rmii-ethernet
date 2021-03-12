@@ -1,0 +1,26 @@
+.program rmii_ethernet_phy_tx_data
+.wrap_target
+    out pins, 3
+.wrap
+
+% c-sdk {
+
+static inline void rmii_ethernet_phy_tx_init(PIO pio, uint sm, uint offset, uint pin) {
+    pio_gpio_init(pio, pin);
+    pio_gpio_init(pio, pin + 1);
+    pio_gpio_init(pio, pin + 2);
+
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 3, true);
+
+    pio_sm_config c = rmii_ethernet_phy_tx_data_program_get_default_config(offset);
+    sm_config_set_out_pins(&c, pin, 3);
+    
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+    sm_config_set_out_shift(&c, true, true, 3);
+
+    sm_config_set_clkdiv(&c, 10);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

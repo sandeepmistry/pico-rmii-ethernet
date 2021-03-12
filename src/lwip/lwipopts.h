@@ -45,10 +45,11 @@
 #define ETH_PAD_SIZE                    0
 #define LWIP_IP_ACCEPT_UDP_PORT(p)      ((p) == PP_NTOHS(67))
 
+#define LWIP_NETIF_LINK_CALLBACK        1
+#define LWIP_NETIF_STATUS_CALLBACK      1
+
 #define TCP_MSS                         (1500 /*mtu*/ - 20 /*iphdr*/ - 20 /*tcphhr*/)
 #define TCP_SND_BUF                     (2 * TCP_MSS)
-
-#define ETHARP_SUPPORT_STATIC_ENTRIES   1
 
 #define LWIP_HTTPD_CGI                  0
 #define LWIP_HTTPD_SSI                  0
