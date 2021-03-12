@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2021 Sandeep Mistry
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 #include <string.h>
 
 #include "hardware/dma.h"

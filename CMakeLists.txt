@@ -51,7 +51,7 @@ target_sources(pico_lwip INTERFACE
     ${LWIP_PATH}/src/apps/http/httpd.c
     ${LWIP_PATH}/src/apps/http/fs.c
 
-    ${CMAKE_CURRENT_LIST_DIR}/src/lwip/arch.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/lwip/sys_arch.c
 )
 
 target_include_directories(pico_lwip INTERFACE

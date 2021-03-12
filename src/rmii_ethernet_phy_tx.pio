@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2021 Sandeep Mistry
+ *
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+
 .program rmii_ethernet_phy_tx_data
 .wrap_target
     out pins, 3
