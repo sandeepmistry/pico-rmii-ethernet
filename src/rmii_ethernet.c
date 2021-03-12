@@ -18,35 +18,19 @@
 #include "rmii_ethernet_phy_rx.pio.h"
 #include "rmii_ethernet_phy_tx.pio.h"
 
-#ifndef PICO_RMII_ETHERNET_PIO
-#define PICO_RMII_ETHERNET_PIO pio0
-#endif
+#include "rmii_ethernet/netif.h"
 
-#ifndef PICO_RMII_ETHERNET_SM_RX
-#define PICO_RMII_ETHERNET_SM_RX 0
-#endif
+#define PICO_RMII_ETHERNET_PIO      (rmii_eth_netif_config.pio)
+#define PICO_RMII_ETHERNET_SM_RX    (rmii_eth_netif_config.pio_sm_start)
+#define PICO_RMII_ETHERNET_SM_TX    (rmii_eth_netif_config.pio_sm_start + 1)
+#define PICO_RMII_ETHERNET_RX_PIN   (rmii_eth_netif_config.rx_pin_start)
+#define PICO_RMII_ETHERNET_TX_PIN   (rmii_eth_netif_config.tx_pin_start)
+#define PICO_RMII_ETHERNET_MDIO_PIN (rmii_eth_netif_config.mdio_pin_start)
+#define PICO_RMII_ETHERNET_MDC_PIN  (rmii_eth_netif_config.mdio_pin_start + 1)
+#define PICO_RMII_ETHERNET_MAC_ADDR (rmii_eth_netif_config.mac_addr)
 
-#ifndef PICO_RMII_ETHERNET_SM_TX
-#define PICO_RMII_ETHERNET_SM_TX 1
-#endif
-
-#ifndef PICO_RMII_ETHERNET_RX_PIN
-#define PICO_RMII_ETHERNET_RX_PIN 6
-#endif
-
-#ifndef PICO_RMII_ETHERNET_TX_PIN
-#define PICO_RMII_ETHERNET_TX_PIN 10
-#endif
-
-#ifndef PICO_RMII_ETHERNET_MDIO_PIN
-#define PICO_RMII_ETHERNET_MDIO_PIN 14
-#endif
-
-#ifndef PICO_RMII_ETHERNET_MDC_PIN
-#define PICO_RMII_ETHERNET_MDC_PIN 15
-#endif
-
-struct netif *rmii_eth_netif;
+static struct netif *rmii_eth_netif;
+static struct netif_rmii_ethernet_config rmii_eth_netif_config = NETIF_RMII_ETHERNET_DEFAULT_CONFIG();
 
 static uint rx_sm_offset;
 static uint tx_sm_offset;
@@ -63,7 +47,7 @@ static uint8_t rx_frame[1518];
 static uint8_t tx_frame[1518];
 static uint8_t tx_frame_bits[1538 * 4];
 
-const uint32_t ethernet_polynomial_le = 0xedb88320U;
+static const uint32_t ethernet_polynomial_le = 0xedb88320U;
 
 static uint ethernet_frame_crc(const uint8_t *data, int length)
 {
@@ -325,14 +309,20 @@ static err_t netif_rmii_ethernet_low_init(struct netif *netif) {
     netif->mtu        = 1500; 
     netif->flags      = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET | NETIF_FLAG_IGMP | NETIF_FLAG_MLD6;
 
-    pico_unique_board_id_t board_id;
+    if (PICO_RMII_ETHERNET_MAC_ADDR != NULL) {
+        memcpy(netif->hwaddr, PICO_RMII_ETHERNET_MAC_ADDR, 6);
+    } else {
+        // generate one for unique board id
+        pico_unique_board_id_t board_id;
     
-    pico_get_unique_board_id(&board_id);
+        pico_get_unique_board_id(&board_id);
 
-    netif->hwaddr[0] = 0xb8;
-    netif->hwaddr[1] = 0x27;
-    netif->hwaddr[2] = 0xeb;
-    memcpy(&netif->hwaddr[3], &board_id.id[5], 3);
+        netif->hwaddr[0] = 0xb8;
+        netif->hwaddr[1] = 0x27;
+        netif->hwaddr[2] = 0xeb;
+        memcpy(&netif->hwaddr[3], &board_id.id[5], 3);
+    }
+    
     
     netif->hwaddr_len = ETH_HWADDR_LEN;
     
@@ -374,7 +364,11 @@ static err_t netif_rmii_ethernet_low_init(struct netif *netif) {
     return ERR_OK;
 }
 
-err_t netif_rmii_ethernet_init(struct netif *netif) {
+err_t netif_rmii_ethernet_init(struct netif *netif, struct netif_rmii_ethernet_config *config) {
+    if (config != NULL) {
+        memcpy(&rmii_eth_netif_config, config, sizeof(rmii_eth_netif_config));
+    }
+
     netif_add(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY, NULL, netif_rmii_ethernet_low_init, netif_input);
 
     netif->name[0] = 'e';
